@@ -1,0 +1,96 @@
+# An example docker-compose.yml for run on devcontainer.
+
+version: "3.5"
+services:
+  # Primary application service
+  app:
+    user: "vscode:vscode"
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ..:/app:cached
+      - $HOME/.ssh/:/home/vscode/.ssh/
+    command: sleep infinity
+    networks:
+      - network_shared
+
+  # MySQL database service
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: project_dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - network_shared
+
+  # PostgreSQL database service
+  postgres:
+    image: postgres:12-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - network_shared
+
+  # Memcached service
+  memcached:
+    image: memcached:1.5-alpine
+    ports:
+      - 11211:11211
+    networks:
+      - network_shared
+
+  # RabbitMQ service
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - network_shared
+
+  # Redis service
+  redis:
+    image: redis:4.0.10-alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+    networks:
+      - network_shared
+
+  # OpenSearch service
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
+    networks:
+      - network_shared
+
+volumes:
+  mysql_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  opensearch_data:
+    driver: local
+
+networks:
+  network_shared:
+    external: true
+    name: network_shared
