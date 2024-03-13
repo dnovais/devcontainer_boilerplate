@@ -1,15 +1,21 @@
 # An example docker-compose.yml for run on devcontainer.
 
 version: "3.5"
+
 services:
   # Primary application service
   app:
     user: "vscode:vscode"
     build:
       context: ..
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: .devcontainer/Dockerfile  
+      args:
+        - PORT=${APP_MAIN_PORT}
+        - RUBY_VERSION=${RUBY_VERSION}
+        - NODE_JS_VERSION=${NODE_JS_VERSION}
+        - BUNDLE_VERSION=${BUNDLE_VERSION} 
     ports:
-      - "3000:3000"
+      - ${APP_MAIN_PORT}:${APP_MAIN_PORT}
     volumes:
       - ..:/app:cached
       - $HOME/.ssh/:/home/vscode/.ssh/
@@ -20,11 +26,11 @@ services:
   # MySQL database service
   mysql:
     image: mysql:5.7
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: project_dev
+    env_file:
+      - path: ./mysql_devcontainer.env
+        required: true
     ports:
-      - "3306:3306"
+      - ${MYSQL_PORT}:3306
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -33,13 +39,13 @@ services:
   # PostgreSQL database service
   postgres:
     image: postgres:12-alpine
+    env_file:
+      - path: ./postgres_devcontainer.env
+        required: true    
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - ${POSTGRES_PORT}:5432
     networks:
       - network_shared
 
@@ -47,7 +53,7 @@ services:
   memcached:
     image: memcached:1.5-alpine
     ports:
-      - 11211:11211
+      - ${MEMCACHED_PORT}:11211
     networks:
       - network_shared
 
@@ -55,8 +61,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - 5672:5672
-      - 15672:15672
+      - ${RABBIT_MQ_PORT_1}:5672
+      - ${RABBIT_MQ_PORT_2}:15672
     networks:
       - network_shared
 
@@ -64,7 +70,7 @@ services:
   redis:
     image: redis:4.0.10-alpine
     ports:
-      - 6379:6379
+      - ${REDIS_PORT}:6379
     volumes:
       - redis_data:/data
     networks:
@@ -74,9 +80,17 @@ services:
   opensearch:
     image: opensearchproject/opensearch:latest
     ports:
-      - 9200:9200
+      - ${OPEN_SEARCH_PORT}:9200
     environment:
       - discovery.type=single-node
+    networks:
+      - network_shared
+
+  # Mailcatcher service
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - ${MAIL_CATCHER_PORT}:1080
     networks:
       - network_shared
 

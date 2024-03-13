@@ -10,9 +10,6 @@
   },
   "remoteUser": "vscode",
   // "remoteUser": "root", for wsl
-  "forwardPorts": [
-    3000,
-    5432
-  ],
+  "forwardPorts": [3000, 5432],
   "postCreateCommand": "chmod +x /app/.devcontainer/post-create.sh && /app/.devcontainer/post-create.sh"
 }
