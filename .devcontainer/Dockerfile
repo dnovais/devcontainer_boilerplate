@@ -3,11 +3,23 @@
 ### ARGs
 ARG DEBIAN_FRONTEND=noninteractive
 ARG VARIANT=bullseye
+ARG RUBY_VERSION=3.3.0
+ARG NODE_JS_VERSION=20.11.1
+ARG BUNDLE_VERSION=2.5.6
+ARG PORT=3000
 
 ### FROM
 FROM mcr.microsoft.com/vscode/devcontainers/base:${VARIANT}
 
+ARG RUBY_VERSION
+ARG NODE_JS_VERSION
+ARG BUNDLE_VERSION
+ARG PORT
+
 ### ENVs
+ENV RUBY_VERSION ${RUBY_VERSION}
+ENV NODE_JS_VERSION ${NODE_JS_VERSION}
+ENV BUNDLE_VERSION ${BUNDLE_VERSION}
 ENV APP_PATH /app
 ENV PATH /home/vscode/.asdf/shims:/home/vscode/.asdf/bin:$PATH
 ENV ASDF_DATA_DIR /usr/local/asdf
@@ -33,6 +45,8 @@ RUN git clone https://github.com/asdf-vm/asdf.git /usr/local/asdf && \
   chmod +x /etc/profile.d/asdf.sh && \
   chown -R vscode:vscode /usr/local/asdf
 
+SHELL ["/bin/bash", "-lc"]
+
 RUN echo -e '\n. /usr/local/asdf/asdf.sh' >> /home/vscode/.bashrc && \
   echo -e '\n. /usr/local/asdf/asdf.sh' >> /home/vscode/.zshrc && \
   echo -e "\nexport PATH=\"/home/vscode/.gems/bin:\$PATH\"" >> /home/vscode/.bashrc && \
@@ -42,17 +56,15 @@ RUN echo -e '\n. /usr/local/asdf/asdf.sh' >> /home/vscode/.bashrc && \
 # USER app
 
 COPY .tool-versions ./
-
-### SHELL
-SHELL ["/bin/zsh", "-lc"]
+COPY .ruby-version ./
 
 ### Install Ruby and Node.js using asdf
-RUN /bin/bash -c ". /usr/local/asdf/asdf.sh && asdf plugin add ruby"
-RUN /bin/bash -c ". /usr/local/asdf/asdf.sh && asdf plugin add nodejs"
-RUN /bin/bash -c ". /usr/local/asdf/asdf.sh && asdf install ruby 2.7.7"
-RUN /bin/bash -c ". /usr/local/asdf/asdf.sh && asdf install nodejs 14.18.2"
-RUN /bin/bash -c ". /usr/local/asdf/asdf.sh && asdf global ruby 2.7.7"
-RUN /bin/bash -c ". /usr/local/asdf/asdf.sh && asdf global nodejs 14.18.2"
+RUN asdf plugin add ruby
+RUN asdf plugin add nodejs
+RUN asdf install ruby $RUBY_VERSION
+RUN asdf install nodejs $NODE_JS_VERSION
+RUN asdf global ruby $RUBY_VERSION
+RUN asdf global nodejs $NODE_JS_VERSION
 
 # Change ownership of ASDF installations
 RUN chown -R vscode:vscode /usr/local/asdf
@@ -63,7 +75,7 @@ USER vscode
 COPY Gemfile Gemfile.lock ./
 
 RUN . /usr/local/asdf/asdf.sh && \
-  gem install bundler -v "~> 2.3.26"
+  gem install bundler -v "~> ${BUNDLE_VERSION}"
 
 ### Expose ports
-EXPOSE 3000 35729
+EXPOSE ${PORT}

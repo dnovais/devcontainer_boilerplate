@@ -3,9 +3,13 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/app",
-  "forwardPorts": [
-    3000,
-    5432
-  ],
+  "customizations": {
+    "vscode": {
+      "extensions": ["Shopify.ruby", "sorbet.sorbet", "Cody Hoover.ruby-linter"]
+    }
+  },
+  "remoteUser": "vscode",
+  // "remoteUser": "root", for wsl
+  "forwardPorts": [3000, 5432],
   "postCreateCommand": "chmod +x /app/.devcontainer/post-create.sh && /app/.devcontainer/post-create.sh"
 }
